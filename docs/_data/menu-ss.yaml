@@ -1,0 +1,33 @@
+- text: A Quick Example
+  url: ss-manual-quick-example.html
+- text: Execution Model
+  url: ss-manual-execution-model.html
+- text: Creating Streaming DataFrames
+  url: ss-manual-streaming-dataframes.html
+- text: Stateless Stream Processing
+  url: ss-manual-stateless-stream-processing.html
+- text: Stateful Stream Processing
+  url: ss-manual-stateful-stream-processing.html
+  subitems:
+    - text: Late Data, Event-Time, and Watermarks
+      url: ss-manual-event-time-watermarks-and-late-data.html
+    - text: Aggregations
+      url: ss-manual-aggregations.html
+    - text: Deduplication
+      url: ss-manual-deduplication.html
+    - text: Joins
+      url: ss-manual-joins.html
+    - text: Arbitrary Stateful Operations
+      url: ss-manual-arbitrary-stateful-operations.html
+    - text: Tuning Your Stateful Jobs
+      url: ss-manual-tuning-your-stateful-jobs.html
+    - text: Unsupported Operations
+      url: ss-manual-unsupported-operations.html
+- text: Starting Streaming Queries
+  url: ss-manual-streaming-queries.html
+- text: Operational Aspects of Streaming Queries
+  url: ss-manaual-operational-aspects.html
+- text: Performance optimizations
+  url: ss-manual-performance-optimizations.html
+- text: Recipes
+  url: ss-manual-recipes.html
