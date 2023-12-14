@@ -41,8 +41,22 @@ By aggregating on event-time, we can deal with delayed data. But we actually hav
 
 So the central question is: in the face of delayed data, how can the streaming engine know when an aggregate is complete? To do this, we're going to assume the existence of a magical timestamp called a _watermark_.
 
-A watermark is a timestamp that says one thing, and one thing _only_ (we cannot stress that enough): a watermark is the timestamp before which the streaming engine will not receive any more records. If the streaming engine had a watermark of Wednesday at 12:05am, it would not receive any records before Wednesday at 12:05am. Thus, it can be sure that no more records for Tuesday will be received, so it can go ahead and tell a downstream service to bill users for Tuesday.
+A watermark is a timestamp that has one definition, and one definition _only_ (we cannot stress that enough): a watermark is the timestamp (in event-time) before which the streaming engine will not process any more records. If the streaming engine had a watermark of Wednesday at 12:05am, it would not process any records before Wednesday at 12:05am. If the streaming engine had a watermark of Wednesday at 6am, it would not process any more records with event-time earlier than 6am.
 
 ### Computing Watermarks
 
-TODO. And diagram.
+It won't hurt to reiterate the definition of a watermark:
+
+> A watermark is the timestamp, in event-time, before which Structured Streaming will not process any more records.
+
+TODO.
+
+### The Only Acronym You Need: Watermarks are WET
+
+We can concisely express everything in this article with the "WET" acronym. Watermarks are _WET_ because they:
+
+1. **W**alk the line between event-times Structured Streaming will process, and event-times it won't.
+2. **E**valuate periodically. Structured Streaming evaluates watermarks at the end of each micro-batch.
+3. **T**rail behind the largest event-time by a fixed delay. This is how you compute a watermark.
+
+The first bullet is the definition of the watermark. The second and third bullets are technically implementation details, but they'll help you fine-tune your pipelines for certain cases (i.e. backfills) and latency. We'll talk about those later!

@@ -5,24 +5,24 @@
 - text: Creating Streaming DataFrames
   url: ss-manual-streaming-dataframes.html
 - text: Stateless Stream Processing
-  url: ss-manual-stateless-stream-processing.html
+  url: ss-manual-stateless.html
 - text: Stateful Stream Processing
-  url: ss-manual-stateful-stream-processing.html
+  url: ss-manual-stateful.html
   subitems:
     - text: Late Data, Event-Time, and Watermarks
-      url: ss-manual-event-time-watermarks-and-late-data.html
+      url: ss-manual-stateful-event-time-watermarks-and-late-data.html
     - text: Aggregations
-      url: ss-manual-aggregations.html
+      url: ss-manual-stateful-aggregations.html
     - text: Deduplication
-      url: ss-manual-deduplication.html
+      url: ss-manual-stateful-deduplication.html
     - text: Joins
-      url: ss-manual-joins.html
+      url: ss-manual-stateful-joins.html
     - text: Arbitrary Stateful Operations
-      url: ss-manual-arbitrary-stateful-operations.html
+      url: ss-manual-stateful-arbitrary-stateful-operations.html
     - text: Tuning Your Stateful Jobs
-      url: ss-manual-tuning-your-stateful-jobs.html
+      url: ss-manual-stateful-tuning-your-stateful-jobs.html
     - text: Unsupported Operations
-      url: ss-manual-unsupported-operations.html
+      url: ss-manual-stateful-unsupported-operations.html
 - text: Starting Streaming Queries
   url: ss-manual-streaming-queries.html
 - text: Operational Aspects of Streaming Queries
