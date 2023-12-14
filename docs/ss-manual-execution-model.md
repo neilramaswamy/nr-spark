@@ -60,4 +60,4 @@ This mode is useful if you want to run streaming jobs on a one-off basis. One-of
 
 ## Output Mode: Configuring what is written to the sink
 
-TODO.
+TODO(wei). Let's briefly discuss the 3 output modes, emphasizing _why_ you might want to use a certain one. The reference (which doesn't exist yet) can have all the in-the-weeds details about which output mode doesn't work with xyz stateful operator. But we should give practical advice here, like, "doing outputmode update means that we update the downstream table in place, which can get expensive if you're charged per-write." stuff like that.

@@ -37,7 +37,7 @@ Projection is the operator that takes a subset of columns from an incoming strea
 
 You might want to only make sure the downstream table has the name and birthday columns. To do this, you should use the `select` operator, which works with streaming DataFrames just as it works with static DataFrames:
 
-TODO, code example.
+TODO(wei), code example. This doesn't need to work E2E, we can just assume the existence of some DataFrame `df` with a known schema. Similar to what we already have.
 
 Yay for a unified batch and streaming API!
 
@@ -48,7 +48,7 @@ But sometimes, upstream sources might not have all the information you need for 
 - You generate a column based off an existing column
 - You generate a column based off a "standalone" function
 
-TODO, code example. Should use `selectExpr` and built-in Spark functions. Also
+TODO(wei), code example. Should probably use `selectExpr` and some built-in Spark function. Not sure the most commonly used built-in Spark function (though we probably should avoid `current_timestamp` just because processing-time/event-time is discussed only later).
 
 ## Selecting
 
@@ -58,7 +58,7 @@ Selection is all about keeping certain rows that satisfy a condition that you sp
 - Your filtering predicate can refer to column names as strings
 - You can use unary operators like `<`, `>`, `=`, `!=`
 
-TODO, code example.
+TODO(wei), code example.
 
 ## Selection and Projection
 
@@ -69,4 +69,4 @@ Now, we'll put the following four concepts together to write a fairly useful sta
 - Column generation
 - Column selection
 
-TODO. Let's find a REALLY good example here.
+TODO(not wei). I need to work with Ryan to figure out what to put here, and also need to see if we can use the "memory" source.
