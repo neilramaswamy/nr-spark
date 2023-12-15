@@ -33,17 +33,29 @@ The situation above highlights one of the main differences between batch and str
 - _Event-time_, which is when events are generated (e.g. by end-users)
 - _Processing-time_, which is when an event is received by the streaming engine
 
-Almost always, we want to aggregate based on _event-time_. In our example, the event-time of the log was 11:50pm, and the processing-time was 12:05am. If we aggregate on event-time, we won't overcharge the user, since the log will be put into the window for Tuesday. We'll shortly see how to tell Structured Streaming what column of our source records it should use to find a record's event-time.
+Almost always, stateful operators will use _event-time_ in their logic. To illustrate, consider the aggregation operator, which breaks the event-time domain into windows. Upon receiving a record, the aggregation operator will place the record into the window that corresponds with that record's event-time.
+
+In our example, the event-time of the log was 11:50pm on Tuesday, and the processing-time was 12:05am on Wednesday. So, at 12:05 when the record was received, you'd want Structured Streaming to place that record into the window for Tuesday. To sum it up:
+
+- Records are generated in the _event-time_ domain
+- Records are received in _processing-time_ domain
+- Aggregations and other stateful operators use the _event-time_ domain in their logic
 
 ## Watermarks
 
-By aggregating on event-time, we can deal with delayed data. But we actually have a problem on our hands: if events can be delayed, how can we ever know for sure that an aggregate is "done"? Consider the following: the customer used a cloud credit at 11:30pm, but it's an hour delayed. If the streaming engine didn't wait for this delayed record, it would under-report the user's usage!
+By using event-time, we can make sure that we process records in a way that aligns with the underlying semantics of the query we're trying to run (i.e. charging the user based on when they used a service, not based on when the engine receives that log). But we have an issue.
 
-So the central question is: in the face of delayed data, how can the streaming engine know when an aggregate is complete? To do this, we're going to assume the existence of a magical timestamp called a _watermark_.
+If records can be delayed, how do we know when an aggregate is "finished"? Let's use our previous example, where the streaming engine is computing per-day aggregates of cloud service usage. If the streaming engine had decided to charge the user for their Tuesday usage _right at_ Wednesday at 12:01am, the streaming engine would have missed the delayed Tuesday record that came in at 12:05am. Even worse, if the user had used a service multiple times around 11:50pm and all those records were received around 12:05am, the streaming engine's aggregate would be wildly off.
 
-A watermark is a timestamp that has one definition, and one definition _only_ (we cannot stress that enough): a watermark is the timestamp (in event-time) before which the streaming engine will not process any more records. If the streaming engine had a watermark of Wednesday at 12:05am, it would not process any records before Wednesday at 12:05am. If the streaming engine had a watermark of Wednesday at 6am, it would not process any more records with event-time earlier than 6am.
+So the central question is: in the face of delayed data, when can the streaming engine declare an aggregate as being complete? To do this, streaming engines maintain a useful timestamp called a _watermark_.
+
+A watermark is a timestamp that has one definition, and one definition _only_ (we cannot stress that enough): a watermark is the timestamp (in event-time) before which the streaming engine does not expect any more records. If the streaming engine had a watermark of Wednesday at 12:15am, it would not expect any more recordw with event-time less than 12:15am. At that point, it could safely declare the amount of cloud-usage from Tuesday, since the only new records it would receive would be for event-times after 12:15am.
 
 ### Computing Watermarks
+
+So how do you compute a watermark? It turns out, if you know the _maximum delay_ (i.e. the maximum gap between event-time and processing-time) between when events are generated and when they're received, you can compute a pretty decent watermark. Here's why.
+
+TODO.
 
 It won't hurt to reiterate the definition of a watermark:
 

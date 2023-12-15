@@ -6,7 +6,13 @@
   url: ss-manual-streaming-dataframes.html
 - text: Stateless Stream Processing
   url: ss-manual-stateless.html
-- text: Stateful Stream Processing
+
+# unsupported operations should be in the reference. if this guide does its job they shouldn't encounter those immediately.
+- text: Running Streaming Queries
+  url: ss-manual-running-streaming-queries.html
+# At this point they should be able to run examples E2E
+
+- text: Introduction to Stateful Stream Processing
   url: ss-manual-stateful.html
   subitems:
     - text: Late Data, Event-Time, and Watermarks
@@ -15,19 +21,25 @@
       url: ss-manual-stateful-aggregations.html
     - text: Deduplication
       url: ss-manual-stateful-deduplication.html
+    - text: Chaining stateful operators
+      url: ss-manual-stateful-chaining.html
+
+- text: Advanced Stateful Stream Processing
+  url: ss-manual-advanced-stateful.html
+  subitems:
     - text: Joins
-      url: ss-manual-stateful-joins.html
+      url: ss-manual-advanced-stateful-joins.html
     - text: Arbitrary Stateful Operations
-      url: ss-manual-stateful-arbitrary-stateful-operations.html
-    - text: Tuning Your Stateful Jobs
-      url: ss-manual-stateful-tuning-your-stateful-jobs.html
-    - text: Unsupported Operations
-      url: ss-manual-stateful-unsupported-operations.html
-- text: Starting Streaming Queries
-  url: ss-manual-streaming-queries.html
+      url: ss-manual-advanced-stateful-arbitrary-operations.html
+    - text: The State Processor API
+      url: ss-manual-advanced-stateful-arbitrary-operations.html
+
 - text: Operational Aspects of Streaming Queries
-  url: ss-manaual-operational-aspects.html
-- text: Performance optimizations
-  url: ss-manual-performance-optimizations.html
+  url: ss-manual-operations.html
+  subitems:
+    - text: Monitoring
+      url: ss-manual-operations-monitoring.html
+    - text: Performance tuning
+      url: ss-manual-operations-performance-tuning.html
 - text: Recipes
   url: ss-manual-recipes.html

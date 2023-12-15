@@ -40,23 +40,13 @@ We go into more detail of triggers and output mode later. However, reading the s
 
 Structured Streaming "repeatedly" breaks up an input stream into micro-batches that it executes with the Spark SQL Engine. The way that you configure the precise definition of "repeatedly" is with _triggers_. Triggers instruct Structured Streaming when it should kick-off (or trigger!) a micro-batch. The options are as follow.
 
-### Default Trigger
+- **Default trigger**: Structured Streaming runs micro-batches back-to-back. After finishing one micro-batch, if there's new data in the source, it will start another micro-batch to process that new data.
+- **Fixed-interval trigger**: Structured Streaming will run micro-batches at an interval you specify.
+- **Available-now trigger**: Structured Streaming will process all data that is available when the streaming job begins. After processing that data, the streaming job will exit.
 
-Structured Streaming will choose how much of the input stream to read, and create a micro-batch out of that data. After that micro-batch finishes, it will kick-off another micro-batch.
+One of the main differences between a streaming and batch job is that streaming jobs _incrementally_ processes their source—they don't have to read the entire source every time they start. The fixed-interval and available-now triggers allow you to incrementally process your source, without having to constantly run the job.
 
-This mode is the best balance between throughput and latency. Because you let Spark decide how much of the input to read from your source, it can choose an optimal size to maximize throughput. And because it will start a micro-batch right after finishing the last one, no time is "wasted" between micro-batches.
-
-### Fixed-interval Trigger
-
-Structured Streaming will kick-off micro-batches at a user-specified interval.
-
-This mode is useful if you don't have a latency sensitive task, but you want to incrementally process data from your source. For example, suppose that you have data in cloud storage that you want to process only once per day. While you might instinctively reach for a batch job on a cron schedule, a streaming job with a fixed-interval of one day will give you benefits such as incremental processing out-of-the-box and guaranteed exactly-once processing.
-
-### Available-now Trigger
-
-Structured Streaming will process all data available in the source at the time when the query is started (i.e. data that arrives during query execution will not be processed).
-
-This mode is useful if you want to run streaming jobs on a one-off basis. One-off streaming jobs are nifty because you're still incrementally processing your data source. However, since you're not constantly running micro-batches, this mode is the most economical. However, you then have to manually trigger when to run a micro-batch, which adds to operational complexity.
+Just a heads-up: in many of the examples in this manual, we'll use the available-now trigger so that we can run one micro-batch, process all the new data in some testing data source, and then inspect the output.
 
 ## Output Mode: Configuring what is written to the sink
 
