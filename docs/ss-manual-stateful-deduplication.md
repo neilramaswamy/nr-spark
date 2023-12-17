@@ -30,15 +30,15 @@ As a result, deduplication of streams is needed. You can deduplicate on one or m
 
 This is the deduplication operator you should reach for first. Most of the time with duplication, you know ahead of time the interval of time within which you might receive duplicates (TODO: is this true? what do people use to figure this out?). If you know that you'll have duplicates within a `k` minute interval, you can instruct Structured Streaming to hold onto records for `k` minutes (so that it can perform deduplication), and then purge the records that have been around for more than `k` minutes.
 
-For example, suppose we know that we'll have duplicates within 5 minutes of each other. If we receive a record with event-time 6, we might receive duplicates up to event-time 5+6 = 11. So, take a moment to think: what tool tells us when we're out of the "danger" zone of receiving an event-time before 11?
+For example, suppose we know that we'll have duplicates within 5 minutes of each other. If we receive a record, `ID = foo`, with event-time 6, we might receive duplicates up to event-time 5+6 = 11. So, take a moment to think: what tool tells us when we're out of the "danger" zone of receiving an event-time before 11?
 
-Watermarks do that! If duplicates for that record can arrive up until 11, once we know that we'll no longer receive event-times _before_ 11, we can purge that record. That's where the name `dropDuplicatesWithinWatermark` comes from: for as many units of time as the watermark delay that you give (i.e. _within_ your watermark delay), Structured Streaming will perform deduplication.
+Watermarks do that! If duplicates for that record can arrive up until 11, once we know that we'll no longer receive event-times _before_ 11, we can purge that record. That's where the name `dropDuplicatesWithinWatermark` comes from: for at least as many units of time as your watermark delay that you give (i.e. _within_ your watermark delay), Structured Streaming will perform deduplication. So, always use `withWatermark` if you're using `dropDuplicatesWithinWatermark`.
 
 Let's do an example. TODO.
 
-If you have duplicates _beyond_ your watermark (in our example, a duplicate after event-time 11), Structured Streaming will not deduplicate that. If you need higher deduplication guarantees, you have two options:
+That being said, if you only drop duplicates _within_ your watermark, you might have duplicates _beyond_ your watermark (in our example, another record with `ID = foo` that arrives after event-time 11 will likely not be deduplicated). If you have strict deduplication requirements, you have two options:
 
-1. Keep state for longer via a larger watermark delay
+1. Keep state for longer via a larger watermark delay (a larger watermark means more records arrive _within_ your watermark)
 2. Keep state forever, using `dropDuplicates`, which is explained below
 
 ## The dangerous option: `dropDuplicates`

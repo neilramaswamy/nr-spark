@@ -25,7 +25,7 @@ Structured Streaming fundamentally has a _micro-batch_ execution model: the inpu
 
 Structured Streaming repeatedly does three things:
 
-1. It reads some amount of new data from a _source_
+1. It reads some amount of _new_ data from a source
 2. It processes that new data in a distributed way
 3. It writes the processed data to a _sink_
 

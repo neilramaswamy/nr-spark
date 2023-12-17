@@ -2,14 +2,17 @@
   url: ss-manual-quick-example.html
 - text: Execution Model
   url: ss-manual-execution-model.html
+
 - text: Creating Streaming DataFrames
   url: ss-manual-streaming-dataframes.html
 - text: Stateless Stream Processing
   url: ss-manual-stateless.html
 
 # unsupported operations should be in the reference. if this guide does its job they shouldn't encounter those immediately.
+# unsupported operations should be keyed by the _exact_ error that we throw in the code, so that google search works.
 - text: Running Streaming Queries
   url: ss-manual-running-streaming-queries.html
+
 # At this point they should be able to run examples E2E
 
 - text: Introduction to Stateful Stream Processing
@@ -23,6 +26,8 @@
       url: ss-manual-stateful-deduplication.html
     - text: Chaining stateful operators
       url: ss-manual-stateful-chaining.html
+    - text: Recipes
+      url: ss-manual-stateful-recipes.html
 
 - text: Advanced Stateful Stream Processing
   url: ss-manual-advanced-stateful.html
@@ -33,6 +38,8 @@
       url: ss-manual-advanced-stateful-arbitrary-operations.html
     - text: The State Processor API
       url: ss-manual-advanced-stateful-arbitrary-operations.html
+    - text: Recipes
+      url: ss-manual-advanced-stateful-recipes.html
 
 - text: Operational Aspects of Streaming Queries
   url: ss-manual-operations.html
@@ -41,5 +48,3 @@
       url: ss-manual-operations-monitoring.html
     - text: Performance tuning
       url: ss-manual-operations-performance-tuning.html
-- text: Recipes
-  url: ss-manual-recipes.html
