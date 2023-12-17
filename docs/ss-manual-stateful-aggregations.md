@@ -24,18 +24,46 @@ Our first type of stateful query is the _aggregation_. As discussed in the intro
 - If events can come out-of-order, how do we know when an aggregate is complete?
 - If we have to keep state for our aggregates, how do we make sure state doesn't grow to be infinitely large?
 
+## What is a streaming aggregation?
+
+Streaming aggregations allow you to compute statistics over groups of your data—it's very similar to a `GROUP BY` in SQL, but with the added complication that records can come out-of-order. Let's say that we have a stream of sales and want to compute the _median_ sale-price per hour. To do this, Structured Streaming needs to keep _state_ for each window. For example, let's say we make the following sales at a store:
+
+- `$10` at 2:30pm
+- `$20` at 2:15pm
+- `$15` at 2:45pm
+- `$30` at 3:30pm
+
+In this case, Structured Streaming's _state_ would look like:
+
+- [2pm, 3pm): `[$10, $20, $15]`
+- [3pm, 4pm): `[$30]`
+
+But note: at this point, Structured Streaming hasn't emitted anything about the median during 2pm-3pm to the sink. In fact, even though the current time at the store might be 3:45pm, we haven't emitted the data from 2pm-3pm to the sink. While we know that streaming engines need to wait some time due to late-data, when _precisely_ can they finalize an aggregate and emit it?
+
 ## Closing aggregates and cleaning up state
 
-TODO.
+Here's where watermarks come in: if we have a timestamp before which we don't expect to receive any more records (the watermark), we can finalize aggregates before that point. In particular, we do three things when the watermark advances:
 
-## Aggregation
+1. Find all windows with an end that is less than the new watermark
+2. Compute the aggregate function, and emit the result downstream
+3. Clean up the state associated with that window
 
-- Aggregating on non-event time
-- Aggregating on event-time
+So, in our example, supposes the watermark advances just past 3pm:
+
+1. The only open window with end time less than 3pm is the 2pm - 3pm window.
+2. We compute the aggregate (median) for it, which is `MEDIAN($10, $20, $15)`. So, we emit $15 downstream.
+3. Finally, we clean up the state for the 2pm to 3pm window, leaving only the 3pm - 4pm window in state.
+
+Neat! Here's the takeaway: in the streaming setting, the moment that you _finalize_ an aggregate is the moment that the watermark advances past the end of a window. Thus, you always want to define a watermark when implementing streaming aggregations.
+
+## Variations on aggregation
+
+- types of windows, session windows
+- aligned vs. unaligned aggregations
 
 ## Latency, Correctness, and Output Mode
 
-From this discussion, we see that the watermark delay that you set fundamentally becomes a tradeoff between latency and correctness:
+It actually turns out that your choice of watermark is _really_ important for both the latency and correctness of your pipeline:
 
 - If you have a really large watermark delay, you take longer to finalize aggregates, but your aggregates are more complete.
 - If you have a really small watermark delay, you finalize aggregates more quickly, but your aggregates are less complete.

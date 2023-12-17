@@ -15,6 +15,8 @@
 
 # At this point they should be able to run examples E2E
 
+# Chapter on migration from batch: dropDuplicates -> DDWM. groupBy + watermark
+
 - text: Introduction to Stateful Stream Processing
   url: ss-manual-stateful.html
   subitems:
