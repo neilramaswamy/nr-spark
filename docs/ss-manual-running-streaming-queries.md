@@ -79,25 +79,57 @@ TODO.
 
 ## The Structured Streaming Checklist
 
-It's very reasonable to feel like you wouldn't be able to configure a Structured Streaming job from memory. That's totally fine! In fact, for this particular reason, you can use the following checklist to get started (note: Step 4.4 mentions a _watermark_, which you don't have to worry about for now; we'll get to it shortly!):
+It's very reasonable to feel like you wouldn't be able to configure a Structured Streaming job from memory. That's totally fine! In fact, for this particular reason, you can use the following checklist whenever you're writing a new query.
 
-1. Create a `spark` variable. See [here](https://spark.apache.org/docs/latest/sql-getting-started.html#starting-point-sparksession).
-2. Call `spark.readStream`
-   1. Call `.format` to choose your source. List of sources here (TODO).
-   2. Call `.option` as many times as needed to configure your source.
-   3. Call `.load` to create a streaming `DataFrame`
-3. Call (as many) operators (as you'd like) on your streaming `DataFrame`
-   1. Call `.filter` to filter rows, `.select` to select columns
-   2. Call other stateless operators (here).
-   3. Call stateful operators, which we discuss later (here).
-4. Call `.writeStream`
-   1. Call `.format` to choose your sink. List of sinks here (TODO).
-   2. Call `.option` as many times as needed to configure your sink.
-   3. Call `.option` to set a checkpoint location, described here (TODO).
-   4. Optional: call `.withWatermark` with stateful operators, described here (TODO).
-   5. Optional: call `.outputMode` to set an output mode. List of output modes here (TODO).
-   6. Optional: call `.trigger` to set a trigger. List of triggers here (TODO).
-5. Call `.start`
+Using the toggle below, you can select whether you're writing a stateless or stateful pipeline. So far, we've only discussed stateful queries, but you can come back here and change the toggle once we've discussed stateful queries.
+
+<!-- Unfortunately, we need to use raw HTML so that we can apply a custom class to the list elements we want to hide. -->
+<!-- Eventually, we should use JS so that we can store the selected option in LocalStorage. -->
+<fieldset class="ss-manual">
+  <legend>Checklist type</legend>
+
+  <div>
+    <input type="radio" id="ss-manual-checklist-stateless-input" name="ss-manual-checklist-selector" checked />
+    <label for="ss-manual-stateless">Stateless (selection, projection, etc.)</label>
+  </div>
+
+  <div>
+    <input type="radio" id="ss-manual-checklist-stateful-input" name="ss-manual-checklist-selector" />
+    <label for="ss-manual-stateful">Stateful (aggregation, deduplication, joining, etc.)</label>
+  </div>
+
+</fieldset>
+
+<br />
+
+<ol class="ss-manual">
+    <li>Create a <code>spark</code> variable. See <a href="https://spark.apache.org/docs/latest/sql-getting-started.html#starting-point-sparksession">here</a>.</li>
+    <li>Call <code>spark.readStream</code>
+        <ol>
+            <li><span>Call <code>.format</code> to choose your source. List of sources <a href="#">here (TODO)</a>.</span></li>
+            <li><span>Call <code>.option</code> as many times as needed to configure your source.</span></li>
+            <li><span>Call <code>.load</code> to create a streaming <code>DataFrame</code></span></li>
+        </ol>
+    </li>
+    <li>Call (as many) operators (as you'd like) on your streaming <code>DataFrame</code>
+        <ol>
+            <li><span>Call <code>.filter</code> to filter rows, <code>.select</code> to select columns</span></li>
+            <li><span>Call other stateless operators <a href="#">(here)</a>.</span></li>
+            <li class="ss-manual-checklist-stateful"><span>Call stateful operators, which we discuss <a href="#">(here)</a>.</span></li>
+        </ol>
+    </li>
+    <li>Call <code>.writeStream</code>
+        <ol>
+            <li><span>Call <code>.format</code> to choose your sink. List of sinks <a href="#">here (TODO)</a>.</span></li>
+            <li><span>Call <code>.option</code> as many times as needed to configure your sink.</span></li>
+            <li><span>Call <code>.option</code> to set a checkpoint location, described <a href="#">here (TODO)</a>.</span></li>
+            <li class="ss-manual-checklist-stateful" ><span>Call <code>.withWatermark</code> with stateful operators, described <a href="#">here (TODO)</a>.</span></li>
+            <li><span>Optional: call <code>.trigger</code> to set a trigger. List of triggers <a href="#">here (TODO)</a>.</span></li>
+            <li class="ss-manual-checklist-stateful"><span>Optional: call <code>.outputMode</code> to set an output mode. List of output modes <a href="#">here (TODO)</a>.</span></li>
+        </ol>
+    </li>
+    <li>Call <code>.start</code></li>
+</ol>
 
 ## An End-to-End Example
 
