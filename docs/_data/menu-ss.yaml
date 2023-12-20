@@ -20,10 +20,14 @@
 - text: Introduction to Stateful Stream Processing
   url: ss-manual-stateful.html
   subitems:
-    - text: Late Data, Event-Time, and Watermarks
-      url: ss-manual-stateful-event-time-watermarks-and-late-data.html
+    - text: Time Domains
+      url: ss-manual-stateful-time-domains.html
+    - text: Emitting Results and Output Mode
+      url: ss-manual-stateful-emitting-results.html
+    - text: Watermarks
+      url: ss-manual-stateful-watermarks.html
     - text: Aggregations
-      url: ss-manual-stateful-aggregations.html
+      url: ss-manual-stateful-agggregations-2.html
     - text: Deduplication
       url: ss-manual-stateful-deduplication.html
     - text: Chaining stateful operators
