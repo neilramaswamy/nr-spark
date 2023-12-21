@@ -58,10 +58,10 @@ When will an aggregate not change? Let's take our example from earlier. If we ha
 Such a timestamp is called a _watermark_. We will discuss how to compute a watermark very soon, but for now, let's just assume that we have a watermark. For the sake of our example, let's say the watermark becomes 3:05pm. At that point, the engine takes the following steps:
 
 1. We find the windows with end-time less than 3:05pm. That's our 2pm to 3pm window.
-2. We compute the aggregate (median) for it, which is `MEDIAN(\$15, \$10, \$20)`. So, we emit $15 downstream, and append it to the downstream sink.
+2. We compute the aggregate (median) for it, which is `MEDIAN(\$15, \$10, \$20)`. So, we emit `([2pm, 3pm] -> \$15)` by append it to the downstream sink.
 3. Finally, we clean up the state for the 2pm to 3pm window, leaving only the 3pm to 4pm window in state.
 
-Neat! Here's the takeaway: in the streaming setting, you can _finalize_ and remove from state a windowed aggregate the moment that the watermark advances past the end of that window.
+Neat! Here's the takeaway: in the streaming setting, you can _finalize_ a window and remove it from state the moment that the watermark advances past the end of that window.
 
 ### Emitting aggregates with every update
 
