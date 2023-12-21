@@ -156,6 +156,8 @@ final class DataStreamReader private[sql](sparkSession: SparkSession) extends Lo
       extraOptions + ("path" -> path.get)
     }
 
+    // TODO(neil): If using the memory source, register the schema with the singleton
+
     val ds = DataSource.lookupDataSource(source, sparkSession.sessionState.conf).
       getConstructor().newInstance()
     // We need to generate the V1 data source so we can pass it to the V2 relation as a shim.
