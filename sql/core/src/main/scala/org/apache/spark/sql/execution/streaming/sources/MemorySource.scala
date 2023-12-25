@@ -18,16 +18,17 @@
 package org.apache.spark.sql.execution.streaming.sources
 
 import java.util
-import org.apache.spark.network.util.JavaUtils
-import org.apache.spark.sql.SparkSession
+
+import org.apache.spark.sql.{RowFactory}
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.connector.catalog.{SupportsRead, Table, TableCapability, TableProvider}
 import org.apache.spark.sql.connector.expressions.Transform
-import org.apache.spark.sql.connector.read.{Scan, ScanBuilder}
-import org.apache.spark.sql.connector.read.streaming.{ContinuousStream, MicroBatchStream}
+import org.apache.spark.sql.connector.read.{InputPartition, PartitionReader, PartitionReaderFactory, Scan, ScanBuilder}
+import org.apache.spark.sql.connector.read.streaming.MicroBatchStream
+import org.apache.spark.sql.connector.read.streaming.Offset
 import org.apache.spark.sql.execution.streaming.LongOffset
-import org.apache.spark.sql.execution.streaming.continuous.RateStreamContinuousStream
 import org.apache.spark.sql.execution.streaming.sources.MemorySourceProvider.NAME_OPTION
-import org.apache.spark.sql.internal.connector.SimpleTableProvider
 import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
@@ -36,7 +37,9 @@ class MemorySourceProvider extends TableProvider with DataSourceRegister {
 
   private var cachedTable: Table = null
 
-  override def shortName(): String = "memory"
+  override def shortName(): String = MemorySourceProvider.SHORT_NAME
+
+  override def supportsExternalMetadata(): Boolean = true
 
   // This is called when a user-specific schema is not present. However, a memory source
   // can't infer its schema, since it's entirely up to the user. As a result, if inferSchema
@@ -97,36 +100,134 @@ class MemorySourceTable(namespace: String, schema: StructType)
     override def readSchema(): StructType = schema
 
     override def toMicroBatchStream(checkpointLocation: String): MicroBatchStream =
-      new MemorySourceMicroBatchStream(namespace, schema)
+      new MemorySourceMicroBatchStream(namespace)
 
     override def columnarSupportMode(): Scan.ColumnarSupportMode =
       Scan.ColumnarSupportMode.UNSUPPORTED
   }
+
+  override def schema(): StructType = schema
 }
 
-class MemorySourceMicroBatchStream(namespace: String, schema: StructType) extends MicroBatchStream {
+case class MemoryInputPartition(startOffset: LongOffset, endOffset: LongOffset)
+  extends InputPartition
+
+class MemorySourceMicroBatchStream(namespace: String) extends MicroBatchStream {
+
+  private var committedOffset = LongOffset(-1L)
+
+  // Probably needs to read from the MemorySource singleton
   override def latestOffset(): LongOffset = {
-    MemorySourceOffset(Map(str -> 0L))
+    MemorySource.latestOffset(namespace)
   }
 
   override def planInputPartitions(start: Offset, end: Offset): Array[InputPartition] = {
-    val startOffset = start.asInstanceOf[MemorySourceOffset].partitionToValue(str)
-    val endOffset = end.asInstanceOf[MemorySourceOffset].partitionToValue(str)
-    assert(startOffset <= endOffset)
+    val startOffset = start.asInstanceOf[LongOffset]
+    val endOffset = end.asInstanceOf[LongOffset]
+
+    assert(startOffset.offset <= endOffset.offset)
     Array(MemoryInputPartition(startOffset, endOffset))
   }
 
-  override def createReaderFactory(): PartitionReaderFactory = {
-    MemoryPartitionReaderFactory
+  override def createReaderFactory(): PartitionReaderFactory =
+    (partition: InputPartition) => {
+      val memorySourcePartition = partition.asInstanceOf[MemoryInputPartition]
+
+      new PartitionReader[InternalRow] {
+        // The current index within the partition
+        var currentIndex = -1L
+
+        var isClosed = false
+
+        override def next(): Boolean = {
+          assert(!isClosed)
+
+          currentIndex += 1
+          currentIndex < memorySourcePartition.endOffset.offset
+        }
+
+        override def get(): InternalRow = {
+          MemorySource.get(namespace, currentIndex.toInt)
+        }
+
+        override def close(): Unit = {
+          isClosed = true
+        }
+      }
   }
 
-  override def commit(end: Offset): Unit = {}
+  override def commit(end: Offset): Unit = { committedOffset = end.asInstanceOf[LongOffset] }
   override def stop(): Unit = {}
+
+  override def initialOffset(): Offset = LongOffset(0L)
+
+  /**
+   * Deserialize a JSON string into an Offset of the implementation-defined offset type.
+   *
+   * @throws IllegalArgumentException if the JSON does not encode a valid offset for this reader
+   */
+  override def deserializeOffset(json: String): Offset =
+    LongOffset(json.toLong)
 }
 
+// MemorySource is the one singleton that we expose to users through which
+// they can add data to a named memory source.
+//
+// Internally, when a DataFrame is loaded using the memory source, we register
+// its name and the associated schema with the MemorySource singleton. We do
+// this so that the memory source is able to serialize the user-provided tuples
+// from MemorySource.addData into InternalRows.
+object MemorySource {
+  private var namespaceToSchemaMap = Map[String, StructType]()
+  private var namespaceToDataMap = Map[String, Array[InternalRow]]()
 
 
+  def addData(namespace: String, data: Any): Unit = {
+    // Why isn't the Option type inferred?
+    val schema: Option[StructType] = namespaceToSchemaMap.get(namespace)
+
+    schema match {
+      case Some(struct: StructType) =>
+        val toRow = ExpressionEncoder(struct).createSerializer()
+        val internalRow = toRow(RowFactory.create(data)).copy()
+
+        namespaceToDataMap += namespace ->
+          (namespaceToDataMap.getOrElse(namespace, Array()) :+ internalRow)
+      case None => throw new IllegalArgumentException(s"Supplied namespace $namespace " +
+        s"does not exist")
+    }
+  }
+
+  def latestOffset(namespace: String): LongOffset = {
+    val dataArray = namespaceToDataMap.get(namespace)
+
+    dataArray match {
+      case Some(arr) => LongOffset(arr.length)
+      case None => throw new IllegalStateException(s"Namespace $namespace does not exist")
+    }
+  }
+
+  def get(namespace: String, index: Int): InternalRow = {
+    val dataArray = namespaceToDataMap.get(namespace)
+
+    dataArray match {
+      case Some(arr) => arr(index)
+      case None => throw new IllegalStateException(s"Namespace $namespace does not exist")
+    }
+  }
+
+  private[sql] def registerNamespace(namespace: String, schema: StructType): Unit = {
+    if (namespaceToSchemaMap.contains(namespace))  {
+      throw new IllegalStateException(s"Namespace $namespace is already in-use. " +
+        s"Please use another name.")
+    }
+
+    namespaceToSchemaMap += (namespace -> schema)
+  }
+}
 
 object MemorySourceProvider {
   val NAME_OPTION = "name"
+
+  val SHORT_NAME = "memory"
 }
