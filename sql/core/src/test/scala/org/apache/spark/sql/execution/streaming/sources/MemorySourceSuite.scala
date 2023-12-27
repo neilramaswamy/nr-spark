@@ -21,7 +21,7 @@ import org.apache.spark.sql.streaming.StreamTest
 import org.apache.spark.sql.types.{LongType, StructType}
 
 class MemorySourceSuite extends StreamTest {
-  test("hello world") {
+  test("basic test") {
     val schema = new StructType().add("first", LongType).add("second", LongType)
 
     val source = spark.readStream.format("memory").option("name", "neil").schema(schema).load()
@@ -30,7 +30,7 @@ class MemorySourceSuite extends StreamTest {
 
     val query = df.writeStream.format("memory").queryName("neil").start()
 
-    MemorySource.addData("neil", (1, 2))
+    MemorySource.addData("neil", Seq(1, 2))
     query.processAllAvailable()
   }
 }

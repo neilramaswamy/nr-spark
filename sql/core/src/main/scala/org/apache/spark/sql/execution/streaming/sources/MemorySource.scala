@@ -19,9 +19,7 @@ package org.apache.spark.sql.execution.streaming.sources
 
 import java.util
 
-import org.apache.spark.sql.{RowFactory}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.connector.catalog.{SupportsRead, Table, TableCapability, TableProvider}
 import org.apache.spark.sql.connector.expressions.Transform
 import org.apache.spark.sql.connector.read.{InputPartition, PartitionReader, PartitionReaderFactory, Scan, ScanBuilder}
@@ -177,22 +175,24 @@ class MemorySourceMicroBatchStream(namespace: String) extends MicroBatchStream {
 // its name and the associated schema with the MemorySource singleton. We do
 // this so that the memory source is able to serialize the user-provided tuples
 // from MemorySource.addData into InternalRows.
-object MemorySource {
+object MemorySource extends Serializable {
   private var namespaceToSchemaMap = Map[String, StructType]()
   private var namespaceToDataMap = Map[String, Array[InternalRow]]()
 
 
-  def addData(namespace: String, data: Any): Unit = {
+  def addData(namespace: String, data: Seq[Any]): Unit = {
     // Why isn't the Option type inferred?
     val schema: Option[StructType] = namespaceToSchemaMap.get(namespace)
 
     schema match {
+      // TODO: I don't think we need the struct here? Can we encode just from data?
       case Some(struct: StructType) =>
-        val toRow = ExpressionEncoder(struct).createSerializer()
-        val internalRow = toRow(RowFactory.create(data)).copy()
+        // Create an internal row from data using the struct schema
+        val internalRow = InternalRow.fromSeq(data)
 
-        namespaceToDataMap += namespace ->
-          (namespaceToDataMap.getOrElse(namespace, Array()) :+ internalRow)
+        // JERRY: These lines are causing the serialization failure
+        // namespaceToDataMap += namespace ->
+        //   (namespaceToDataMap.getOrElse(namespace, Array()) :+ internalRow)
       case None => throw new IllegalArgumentException(s"Supplied namespace $namespace " +
         s"does not exist")
     }
@@ -202,7 +202,7 @@ object MemorySource {
     val dataArray = namespaceToDataMap.get(namespace)
 
     dataArray match {
-      case Some(arr) => LongOffset(arr.length)
+      case Some(arr) => if (arr.length == 0) null else LongOffset(arr.length - 1)
       case None => throw new IllegalStateException(s"Namespace $namespace does not exist")
     }
   }
@@ -223,6 +223,7 @@ object MemorySource {
     }
 
     namespaceToSchemaMap += (namespace -> schema)
+    namespaceToDataMap += (namespace -> Array())
   }
 }
 
