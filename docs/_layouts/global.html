@@ -78,7 +78,7 @@
                             <a class="dropdown-item" href="quick-start.html">Quick Start</a>
                             <a class="dropdown-item" href="rdd-programming-guide.html">RDDs, Accumulators, Broadcasts Vars</a>
                             <a class="dropdown-item" href="sql-programming-guide.html">SQL, DataFrames, and Datasets</a>
-                            <a class="dropdown-item" href="structured-streaming-programming-guide.html">Structured Streaming</a>
+                            <a class="dropdown-item" href="ss-manual.html">Structured Streaming</a>
                             <a class="dropdown-item" href="streaming-programming-guide.html">Spark Streaming (DStreams)</a>
                             <a class="dropdown-item" href="ml-guide.html">MLlib (Machine Learning)</a>
                             <a class="dropdown-item" href="graphx-programming-guide.html">GraphX (Graph Processing)</a>
@@ -153,7 +153,7 @@
                     <a href="api/python/getting_started/quickstart_ps.html">pandas API on Spark</a> for pandas workloads,
                     <a href="ml-guide.html">MLlib</a> for machine learning,
                     <a href="graphx-programming-guide.html">GraphX</a> for graph processing,
-                     and <a href="structured-streaming-programming-guide.html">Structured Streaming</a>
+                     and <a href="ss-manual.html">Structured Streaming</a>
                      for incremental computation and stream processing.
                   </div>
                 </div>
@@ -164,8 +164,10 @@
 
         <div class="container">
 
-            {% if page.url contains "/ml" or page.url contains "/sql" or page.url contains "migration-guide.html" %}
-                {% if page.url contains "migration-guide.html" %}
+            {% if page.url contains "/ml" or page.url contains "/sql" or page.url contains "migration-guide" or page.url contains "ss-manual" %}
+                {% if page.url contains "ss-manual" %}
+                    {% include nav-left-wrapper-ss.html nav-ss=site.data.menu-ss %}
+                {% elsif page.url contains "migration-guide" %}
                     {% include nav-left-wrapper-migration.html nav-migration=site.data.menu-migration %}
                 {% elsif page.url contains "/ml" %}
                     {% include nav-left-wrapper-ml.html nav-mllib=site.data.menu-mllib nav-ml=site.data.menu-ml %}

@@ -1126,3 +1126,33 @@ table tr {
 table tr:nth-child(2n) {
   background-color: #F1F4F5; /* Sets a different background color for even rows */
 }
+
+/* Structured Streaming */
+
+/* Revert the Bootstrap styles */
+fieldset.ss-manual, fieldset.ss-manual legend {
+  all: revert;
+}
+
+li.ss-manual-checklist-stateful {
+  display: none;
+}
+
+/* Since the labels in the fieldset are always visible, give both of them padding so that
+they look the same size */
+fieldset.ss-manual label {
+  padding: 4px;
+}
+
+#ss-manual-checklist-stateful-input:checked + label,
+li.ss-manual-checklist-stateful span {
+  padding: 4px;
+  border-radius: 4px;
+  background-color: rgb(50 127 172 / 30%);
+}
+
+/* CSS Parent selector is not supported on Firefox... might have to use JS. */
+fieldset:has(#ss-manual-checklist-stateful-input:checked) ~ ol li.ss-manual-checklist-stateful {
+  display: list-item;
+}
+
