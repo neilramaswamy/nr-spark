@@ -23,18 +23,13 @@ Structured Streaming fundamentally has a _micro-batch_ execution model: the inpu
 
 ## The Structured Streaming Execution Loop
 
-Structured Streaming repeatedly does five things:
+Structured Streaming repeatedly does three things:
 
 1. It reads some amount of _new_ data from a source
-2. It processes that new data in a distributed way
+2. It processes that new data by executing a _micro-batch_
 3. It writes the processed data to a _sink_
 
-There are two axes of configuration of this execution loop. They are:
-
-1. How often does it read from the source? It could read data every hour, or every minute! You configure this with _triggers_.
-2. How much "processed data" does it write to the sink? It could write just the new output it generated, or all the output it every generated. You configure this with _output mode_.
-
-We go into more detail of triggers and output mode later. However, reading the short sections below will give you better intuition for the micro-batch architecture. There's no need to memorize everything here—you can just check the reference (TODO) later!
+We'll investigate all of these three things in more detail, but a relevant question now is, "what does it mean to 'repeatedly' do these things?" Should the streaming engine run a micro-batch every second, every minute, or every hour; or should it just run a micro-batch whenever new data is available.
 
 ## Triggers: Configuring when batches run
 

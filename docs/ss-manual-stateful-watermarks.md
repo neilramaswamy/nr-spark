@@ -19,23 +19,20 @@ license: |
   limitations under the License.
 ---
 
-TODO.
+One more splash of fun—watermarks—before we get to the code: if you're reading this, you're about to have almost 95% of all the domain-knowledge you need to understand stateful streaming!
 
 ## Introduction to Watermarks
 
-By now, it should be reasonably clear that watermarks are important: they help us finalize aggregates, and they help us clean up intermediary buffered state. So how do we compute one?
+In the last section, we mentioned how watermarks allow us to _finalize_ aggregates, and they help the streaming engine clean up intermediary buffered state. If you need a reminder, the watermark is the timestamp in event-time before which the engine won't receive any more records. If you imagine event-time on a timeline, a watermark is the point to the left of which no more records will be received:
 
-With _arbitrarily_ delayed records, coming up with a watermark is impossible. If a record can be arbitrarily delayed, it can be delayed by an infinite amount of time; if it can be delayed by an infinite amount of time, it would arrive at timestamp "infinity". Then, the
-re exists no timestamp before which we won't receive that record, since it will arrive at the end of time itself. Scary!
+![Alt text](image-2.png)
 
-So, let's just assume that records aren't arbitrarily delayed, but rather have a maximum delay; for the sake of example, let's say this maximum delay is 30 minutes.
+But how do we compute a watermark? With _arbitrarily_ delayed records, coming up with an "event-timestamp before which we won't receive any more records" is impossible. Suppose we had a record `foo` generated at 2:15pm and has delay `d`. It will arrive at time `2:15pm + d`, which then is the timestamp before which we will no longer receive `foo`. But since `d` is arbitrary, it can be infinite; in that case, the timestamp before which we won't receive `foo` is `2:15pm + Infinity`, which is very helpful.
 
-The time is now 2:45pm, in event-time. What can we say about the timestamp before which we won't receive records? If it's 2:45pm, the most possibly delayed event was sent at 2:15pm; if we were to now receive a record with event-time any earlier than that, it would more
-delayed than the max delay. So, for 2:45pm, the timestamp before which we won't receive records is 2:45pm - 30 minutes = 2:15pm.
+So, let's just assume that records aren't arbitrarily delayed, but rather have a maximum delay; for the sake of example, let's say this maximum delay is 30 minutes. Consider the following. The time is now 2:45pm, in event-time. What can we say about the timestamp before which we won't receive records? If it's 2:45pm, the most possibly delayed event was sent at 2:15pm; if we were to now receive a record with event-time any earlier than that, it would be more
+delayed than 30 minutes. So, for 2:45pm, the timestamp before which we won't receive records is 2:45pm - 30 minutes = 2:15pm.
 
-PUT-DIAGRAM-HERE
-
-Now, let's assume that the streaming engine has received two records: one with eventtime 3:15pm, and another with eventtime 3:45pm. It can infer two things:
+Now, let's assume that the streaming engine has received two records: one with event-time 3:15pm, and another with eventtime 3:45pm. It can infer two things:
 
 1. Since it just received the 3:15pm record, it wont't receive anything before 3:15pm 30 minutes = 2:45pm.
 2. Since it just received the 3:45pm record, it won't receive anything before 3:45pm 30 minutes = 3:15pm.
@@ -60,8 +57,7 @@ In this example, we have one window spanning from 10 to 20. We can finalize it a
 1. This watermark delay of 10 units is "small". We will need to receive a record with event-time 30 (20 + 10) for the watermark to advance enough to close this window.
 2. The other watermark delay of 20 units is "large". We will need to receive a record with event-time _40_ (20 + 20) for the watermark to advance enough to close this window.
 
-So clearly, the watermark delay is influencing the latency of our pipeline. A smaller watermark delay means we wait for less time before windows close. So, naturally you might think, "oh, low-latency is good, so let's go with the smaller watermark." Beware: there's a s
-ubtle tradeoff.
+So clearly, the watermark delay is influencing the latency of our pipeline. A smaller watermark delay means we wait for less time before windows close. So, naturally you might think, "oh, low-latency is good, so let's go with the smaller watermark." Beware: there's a subtle tradeoff.
 
 If your watermark delay is smaller than the maximum delay, you could finalize your windows before receiving all records (i.e. low-latency, and less correctness). If your watermark delay is set to be larger than the maximum delay, you could finalize your windows _after_
 receiving all records (i.e. high-latency, high correctness). In practice, you'll usually have SLAs on how delayed data can be, so you should use that to set your watermark delay.

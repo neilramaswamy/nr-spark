@@ -23,6 +23,6 @@ As mentioned in the Introduction to Stateless Stream Processing, records in _sta
 
 ## Chapter Overview
 
-Stateful stream processing is exceptionally powerful, but to get the most out of it, you'll need a little bit of streaming "theory" under your belt. (Don't worry, there aren't any proofs, at least in this section.)
+Stateful stream processing is exceptionally powerful, but to get the most out of it, you'll need a little bit of streaming "theory" under your belt. (Don't worry, there aren't any proofs.)
 
-So, the first three sub-sections of this Introduction to Stateful Stream Processing will give you domain knowledge in stateful stream processing. The last four sub-sections will apply this domain knowledge to Structured Streaming, and we'll show you end-to-end examples with runnable code.
+So, the first three sub-sections of this Introduction to Stateful Stream Processing will give you domain knowledge in stateful stream processing, without showing you any Structured Streaming-specific code. The next few sub-sections will apply this domain knowledge to the actual Structured Streaming library, including end-to-end examples you can run yourself.

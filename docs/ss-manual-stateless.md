@@ -19,12 +19,20 @@ license: |
   limitations under the License.
 ---
 
-Stateless stream processing is the first type of stream processing we'll explore. It's characterized by a very simple property: every record can be processed _fully_ independently of every other record. For example:
+Stateless stream processing is the first type of stream processing we'll explore. It's characterized by a very simple property: every record can be emitted downstream (or not, in the case of deduplication) _fully_ independently of any other record. For example:
 
-- Selection is stateless, since you just have to check if a single given record passes the filter predicate
-- Projecting is stateless, since taking a subset of a record's columns can be done without looking at any other records
+- Projecting is stateless, since taking a subset of a record's columns and emitting them downstream can be done without looking at any other records
+- Selection (i.e. filtering) is stateless, since whether you keep or filter a record depends only on that record's columns
 
-We use the word "stateless" because this nice property means that Structured Streaming doesn't need to have any "memory" (i.e. state) about what it has seen. It can just filter a record, or take some columns from the record, and move on. Aggregation, on the other hand, is stateful, since Structured Streaming needs to remember (i.e. keep state) for all the records that belong in an aggregate.
+We use the word "stateless" because this nice property means that Structured Streaming doesn't need to have any "memory" (i.e. state) about what other records it has seen. Stateful operators, on the other hand (like aggregation), is stateful since Structured Streaming needs to remember (i.e. keep state) for all the records that belong in an aggregate.
+
+## The Examples in this Section
+
+In all of the code examples in this section, we setup our DataFrame using the memory source, which we described in the previous section (TODO). We provide that code again here:
+
+TODO.
+
+For brevity, we "collapse" this boilerplate in the examples below by default, but you can re-expand it by clicking on the eye-icon on the top-left of each code-block.
 
 ## Projecting
 
