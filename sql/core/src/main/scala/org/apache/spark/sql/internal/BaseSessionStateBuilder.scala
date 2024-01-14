@@ -350,8 +350,11 @@ abstract class BaseSessionStateBuilder(
   /**
    * Interface to start and stop streaming queries.
    */
-  protected def streamingQueryManager: StreamingQueryManager =
+  protected def streamingQueryManager: StreamingQueryManager = {
+    // scalastyle:off
+    println("this spark session is " + this.toString)
     new StreamingQueryManager(session, conf)
+  }
 
   /**
    * An interface to register custom [[org.apache.spark.sql.util.QueryExecutionListener]]s

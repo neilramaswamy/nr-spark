@@ -17,27 +17,46 @@
 
 package org.apache.spark.sql.execution.streaming.sources
 
-import org.apache.spark.sql.streaming.StreamTest
+import org.apache.spark.sql.streaming.{StreamingQueryListener, StreamTest}
+import org.apache.spark.sql.streaming.StreamingQueryListener.{QueryProgressEvent, QueryStartedEvent, QueryTerminatedEvent}
 import org.apache.spark.sql.types.{LongType, StructType}
 
 class MemorySourceSuite extends StreamTest {
   test("basic test") {
+    // scalastyle:off
+    println("spark at top of test is " + spark)
+
+    spark.streams.addListener(new StreamingQueryListener {
+      override def onQueryStarted(event: QueryStartedEvent): Unit = {
+        println("from test query started")
+      }
+
+      override def onQueryProgress(event: QueryProgressEvent): Unit = {
+        println("from test query progress")
+      }
+
+      override def onQueryTerminated(event: QueryTerminatedEvent): Unit = {
+        println("from test query terminated")
+      }
+    })
+
     val schema = new StructType().add("first", LongType).add("second", LongType)
 
     val source = spark.readStream.format("memory").option("name", "neil").schema(schema).load()
 
     val df = source.select("*")
 
-    val query = df.writeStream.format("console").queryName("neil").start()
+    val query = df.writeStream.format("spy").queryName("neil").start()
+
+    println("query id is " + query.id + " and run id is " + query.runId)
 
     MemorySource.addData("neil", Seq(1L, 2L))
     query.processAllAvailable()
 
-    // scalastyle:off
-    println(query.lastProgress)
+//    println(query.lastProgress)
 
-    MemorySource.addData("neil", Seq(1L, "asdf"))
+    MemorySource.addData("neil", Seq(1L, 3L))
     query.processAllAvailable()
-    println(query.lastProgress)
+//    println(query.lastProgress)
   }
 }
