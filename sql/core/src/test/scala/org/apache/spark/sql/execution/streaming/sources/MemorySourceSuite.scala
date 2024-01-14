@@ -28,9 +28,16 @@ class MemorySourceSuite extends StreamTest {
 
     val df = source.select("*")
 
-    val query = df.writeStream.format("memory").queryName("neil").start()
+    val query = df.writeStream.format("console").queryName("neil").start()
 
-    MemorySource.addData("neil", Seq(1, 2))
+    MemorySource.addData("neil", Seq(1L, 2L))
     query.processAllAvailable()
+
+    // scalastyle:off
+    println(query.lastProgress)
+
+    MemorySource.addData("neil", Seq(1L, "asdf"))
+    query.processAllAvailable()
+    println(query.lastProgress)
   }
 }

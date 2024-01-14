@@ -110,7 +110,8 @@ class MemorySourceTable(namespace: String, schema: StructType)
 case class MemoryInputPartition(startOffset: LongOffset, endOffset: LongOffset)
   extends InputPartition
 
-class MemorySourceMicroBatchStream(namespace: String) extends MicroBatchStream {
+class MemorySourceMicroBatchStream(namespace: String)
+  extends MicroBatchStream with Serializable  {
 
   private var committedOffset = LongOffset(-1L)
 
@@ -176,8 +177,8 @@ class MemorySourceMicroBatchStream(namespace: String) extends MicroBatchStream {
 // this so that the memory source is able to serialize the user-provided tuples
 // from MemorySource.addData into InternalRows.
 object MemorySource extends Serializable {
-  private var namespaceToSchemaMap = Map[String, StructType]()
-  private var namespaceToDataMap = Map[String, Array[InternalRow]]()
+  var namespaceToSchemaMap = Map[String, StructType]()
+  var namespaceToDataMap = Map[String, Array[InternalRow]]()
 
 
   def addData(namespace: String, data: Seq[Any]): Unit = {
@@ -188,11 +189,11 @@ object MemorySource extends Serializable {
       // TODO: I don't think we need the struct here? Can we encode just from data?
       case Some(struct: StructType) =>
         // Create an internal row from data using the struct schema
-        val internalRow = InternalRow.fromSeq(data)
+        val internalRow = InternalRow(data: _*)
 
         // JERRY: These lines are causing the serialization failure
-        // namespaceToDataMap += namespace ->
-        //   (namespaceToDataMap.getOrElse(namespace, Array()) :+ internalRow)
+         namespaceToDataMap += namespace ->
+           (namespaceToDataMap.getOrElse(namespace, Array()) :+ internalRow)
       case None => throw new IllegalArgumentException(s"Supplied namespace $namespace " +
         s"does not exist")
     }
@@ -202,7 +203,7 @@ object MemorySource extends Serializable {
     val dataArray = namespaceToDataMap.get(namespace)
 
     dataArray match {
-      case Some(arr) => if (arr.length == 0) null else LongOffset(arr.length - 1)
+      case Some(arr) => if (arr.length == 0) null else LongOffset(arr.length)
       case None => throw new IllegalStateException(s"Namespace $namespace does not exist")
     }
   }
