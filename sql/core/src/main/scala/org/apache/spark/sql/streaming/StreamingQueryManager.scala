@@ -50,6 +50,8 @@ class StreamingQueryManager private[sql] (
 
   private[sql] val stateStoreCoordinator =
     StateStoreCoordinatorRef.forDriver(sparkSession.sparkContext.env)
+  // scalastyle:off
+  println("Created a new listener bus")
   private val listenerBus =
     new StreamingQueryListenerBus(Some(sparkSession.sparkContext.listenerBus))
 
@@ -228,6 +230,8 @@ class StreamingQueryManager private[sql] (
 
   /** Post a listener event */
   private[sql] def postListenerEvent(event: StreamingQueryListener.Event): Unit = {
+    // scalastyle:off
+    println("Got event: " + event.toString)
     listenerBus.post(event)
   }
 

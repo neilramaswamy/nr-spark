@@ -557,10 +557,11 @@ object DataStreamWriter {
   val SOURCE_NAME_FOREACH = "foreach"
   val SOURCE_NAME_FOREACH_BATCH = "foreachBatch"
   val SOURCE_NAME_CONSOLE = "console"
+  val SOURCE_NAME_SPY = "spy"
   val SOURCE_NAME_TABLE = "table"
   val SOURCE_NAME_NOOP = "noop"
 
   // these writer sources are also used for one-time query, hence allow temp checkpoint location
   val SOURCES_ALLOW_ONE_TIME_QUERY = Seq(SOURCE_NAME_MEMORY, SOURCE_NAME_FOREACH,
-    SOURCE_NAME_FOREACH_BATCH, SOURCE_NAME_CONSOLE, SOURCE_NAME_NOOP)
+    SOURCE_NAME_FOREACH_BATCH, SOURCE_NAME_CONSOLE, SOURCE_NAME_SPY, SOURCE_NAME_NOOP)
 }

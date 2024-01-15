@@ -49,7 +49,6 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
 
   /**
    * RunIds of active queries whose events are supposed to be forwarded by this ListenerBus
-   * to registered `StreamingQueryListeners`.
    *
    * Note 1: We need to track runIds instead of ids because the runId is unique for every started
    * query, even it its a restart. So even if a query is restarted, this bus will identify them
@@ -60,6 +59,8 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
    * `StreamingQueryManager.activeQueries` as soon as it is stopped, but the this ListenerBus
    * must clear a query only after the termination event of that query has been posted.
    */
+  // scalastyle:off
+  println("StreamingQueryListenerBus: creating activeQueryRunIds")
   private val activeQueryRunIds = new mutable.HashSet[UUID]
 
   /**
@@ -69,9 +70,13 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
    * the same SparkSession as this listener.
    */
   def post(event: StreamingQueryListener.Event): Unit = {
+    // scalastyle:off
+
     event match {
       case s: QueryStartedEvent =>
+        println("Query started! for runid " + s.runId + " and query id " + s.id)
         activeQueryRunIds.synchronized { activeQueryRunIds += s.runId }
+        println("query started: activeQueryRunIds " + activeQueryRunIds)
         sparkListenerBus.foreach(bus => bus.post(s))
         // post to local listeners to trigger callbacks
         postToAll(s)
@@ -88,7 +93,9 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
     super.postToAll(event)
     event match {
       case t: QueryTerminatedEvent =>
+        println("removing runid " + t.runId + " from active query run ids")
         activeQueryRunIds.synchronized { activeQueryRunIds -= t.runId }
+        println("queryterminated: activeQueryRunIds " + activeQueryRunIds)
       case _ =>
     }
   }
@@ -121,9 +128,17 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
     def shouldReport(runId: UUID): Boolean = {
       // When loaded by Spark History Server, we should process all event coming from replay
       // listener bus.
-      sparkListenerBus.isEmpty ||
+      println("checking if should report for runid " + runId)
+      println("sparkListenerBus empty?" + sparkListenerBus.isEmpty)
+      println("shouldReport: activeQueryRunIds " + activeQueryRunIds)
+      val ret = sparkListenerBus.isEmpty ||
         activeQueryRunIds.synchronized { activeQueryRunIds.contains(runId) }
+      println("Should log? Ret is " + ret)
+      ret
     }
+
+    // scalastyle:off
+    println("StreamingQueryListener: doPostEvent: " + event.toString + "for listener: " + listener.toString)
 
     event match {
       case queryStarted: QueryStartedEvent =>

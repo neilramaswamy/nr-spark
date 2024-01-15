@@ -37,6 +37,7 @@ import org.apache.spark.sql.execution.datasources.json.JsonUtils.checkJsonSchema
 import org.apache.spark.sql.execution.datasources.v2.{DataSourceV2Utils, FileDataSourceV2}
 import org.apache.spark.sql.execution.datasources.xml.XmlUtils.checkXmlSchema
 import org.apache.spark.sql.execution.streaming.StreamingRelation
+import org.apache.spark.sql.execution.streaming.sources.{MemorySource, MemorySourceProvider}
 import org.apache.spark.sql.sources.StreamSourceProvider
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
@@ -154,6 +155,24 @@ final class DataStreamReader private[sql](sparkSession: SparkSession) extends Lo
       extraOptions
     } else {
       extraOptions + ("path" -> path.get)
+    }
+
+    if (source == MemorySourceProvider.SHORT_NAME) {
+      val namespaceOpt = optionsWithPath.get(MemorySourceProvider.NAME_OPTION)
+
+      val namespace = namespaceOpt match {
+        case Some(name) => name
+        case None => throw new RuntimeException(
+            s"Must specify option ${MemorySourceProvider.NAME_OPTION} " +
+              s"with ${MemorySourceProvider.SHORT_NAME} source")
+      }
+
+      if (userSpecifiedSchema.isEmpty) {
+        throw new RuntimeException(s"Must have schema when using " +
+          s"${MemorySourceProvider.SHORT_NAME} source")
+      }
+
+      MemorySource.registerNamespace(namespace, userSpecifiedSchema.get)
     }
 
     val ds = DataSource.lookupDataSource(source, sparkSession.sessionState.conf).
