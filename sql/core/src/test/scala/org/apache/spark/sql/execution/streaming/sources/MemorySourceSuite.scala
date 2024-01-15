@@ -17,29 +17,11 @@
 
 package org.apache.spark.sql.execution.streaming.sources
 
-import org.apache.spark.sql.streaming.{StreamingQueryListener, StreamTest}
-import org.apache.spark.sql.streaming.StreamingQueryListener.{QueryProgressEvent, QueryStartedEvent, QueryTerminatedEvent}
+import org.apache.spark.sql.streaming.{StreamTest}
 import org.apache.spark.sql.types.{LongType, StructType}
 
 class MemorySourceSuite extends StreamTest {
   test("basic test") {
-    // scalastyle:off
-    println("spark at top of test is " + spark)
-
-    spark.streams.addListener(new StreamingQueryListener {
-      override def onQueryStarted(event: QueryStartedEvent): Unit = {
-        println("from test query started")
-      }
-
-      override def onQueryProgress(event: QueryProgressEvent): Unit = {
-        println("from test query progress")
-      }
-
-      override def onQueryTerminated(event: QueryTerminatedEvent): Unit = {
-        println("from test query terminated")
-      }
-    })
-
     val schema = new StructType().add("first", LongType).add("second", LongType)
 
     val source = spark.readStream.format("memory").option("name", "neil").schema(schema).load()
@@ -48,15 +30,13 @@ class MemorySourceSuite extends StreamTest {
 
     val query = df.writeStream.format("spy").queryName("neil").start()
 
-    println("query id is " + query.id + " and run id is " + query.runId)
-
+    // TODO(neil): Schemafy the resulting table, see why dups in sink.
     MemorySource.addData("neil", Seq(1L, 2L))
     query.processAllAvailable()
 
-//    println(query.lastProgress)
-
     MemorySource.addData("neil", Seq(1L, 3L))
+    MemorySource.addData("neil", Seq(1L, 4L))
+    MemorySource.addData("neil", Seq(5L, 6L))
     query.processAllAvailable()
-//    println(query.lastProgress)
   }
 }
