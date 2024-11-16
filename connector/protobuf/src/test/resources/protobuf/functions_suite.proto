@@ -129,6 +129,10 @@ message OtherExample {
   string other = 1;
 }
 
+message LongExample {
+  int64 key = 1;
+}
+
 message IncludedExample {
   string included = 1;
   OtherExample other = 2;
@@ -321,10 +325,10 @@ message Proto3AllTypes {
   NestedEnum enum_val = 3;
   OtherExample message = 4;
 
-  optional int64 optional_int = 5;
-  optional string optional_text = 6;
-  optional NestedEnum optional_enum_val = 7;
-  optional OtherExample optional_message = 8;
+  int64 optional_int = 5;
+  string optional_text = 6;
+  NestedEnum optional_enum_val = 7;
+  OtherExample optional_message = 8;
 
   repeated int64 repeated_num = 9;
   repeated OtherExample repeated_message = 10;

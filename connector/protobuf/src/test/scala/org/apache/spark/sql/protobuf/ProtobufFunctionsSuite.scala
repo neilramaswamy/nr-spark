@@ -18,14 +18,12 @@ package org.apache.spark.sql.protobuf
 
 import java.sql.Timestamp
 import java.time.Duration
-
 import scala.jdk.CollectionConverters._
-
-import com.google.protobuf.{Any => AnyProto, BoolValue, ByteString, BytesValue, DoubleValue, DynamicMessage, FloatValue, Int32Value, Int64Value, StringValue, UInt32Value, UInt64Value}
+import com.google.protobuf.{BoolValue, ByteString, BytesValue, DoubleValue, DynamicMessage, FloatValue, Int32Value, Int64Value, StringValue, UInt32Value, UInt64Value, Any => AnyProto}
 import org.json4s.jackson.JsonMethods
-
 import org.apache.spark.sql.{AnalysisException, Column, DataFrame, QueryTest, Row}
 import org.apache.spark.sql.functions.{array, lit, map, struct, typedLit}
+import org.apache.spark.sql.protobuf.functions.from_protobuf
 import org.apache.spark.sql.protobuf.protos.Proto2Messages.Proto2AllTypes
 import org.apache.spark.sql.protobuf.protos.SimpleMessageProtos._
 import org.apache.spark.sql.protobuf.protos.SimpleMessageProtos.SimpleMessageRepeated.NestedEnum
@@ -384,6 +382,42 @@ class ProtobufFunctionsSuite extends QueryTest with SharedSparkSession with Prot
             checkAnswer(fromProtoDF.select($"value_from.*"),
               toFromProtoDF.select($"value_to_from.*"))
           })
+    }
+  }
+
+  /**
+   * Writes the records 0L, 1L, and 2L to a DataFrame, serializes them to Protobuf, and then
+   * reads them back. The schema of LongExample is:
+   *
+   * message LongExample {
+   *    int64 key = 1;
+   * }
+   */
+  test("protobuf default fields are not dropped with emit.default.values = true") {
+    val desc = ProtobufUtils.buildDescriptor(testFileDesc, "LongExample")
+
+    val serializedDF = List(0L, 1L, 2L).map(i =>
+      DynamicMessage
+        .newBuilder(desc)
+        .setField(desc.findFieldByName("key"), i)
+        .build()
+        .toByteArray
+    ).toDF("value")
+
+    checkWithFileAndClassName("LongExample") {
+      case (name, descFilePathOpt) =>
+        val deserializedDF = serializedDF.select(
+          from_protobuf_wrapper(
+            $"value",
+            name,
+            descFilePathOpt,
+            Map("emit.default.values" -> "true")).as("value_from")
+        ).select($"value_from.key")
+
+        checkAnswer(
+          deserializedDF,
+          spark.range(3).toDF()
+        )
     }
   }
 
