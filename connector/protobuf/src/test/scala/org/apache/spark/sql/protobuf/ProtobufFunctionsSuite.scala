@@ -387,6 +387,42 @@ class ProtobufFunctionsSuite extends QueryTest with SharedSparkSession with Prot
     }
   }
 
+  /**
+   * Writes the records 0L, 1L, and 2L to a DataFrame, serializes them to Protobuf, and then
+   * reads them back. The schema of LongExample is:
+   *
+   * message LongExample {
+   *    int64 key = 1;
+   * }
+   */
+  test("protobuf default fields are not dropped with emit.default.values = true") {
+    val desc = ProtobufUtils.buildDescriptor(testFileDesc, "LongExample")
+
+    val serializedDF = List(0L, 1L, 2L).map(i =>
+      DynamicMessage
+        .newBuilder(desc)
+        .setField(desc.findFieldByName("key"), i)
+        .build()
+        .toByteArray
+    ).toDF("value")
+
+    checkWithFileAndClassName("LongExample") {
+      case (name, descFilePathOpt) =>
+        val deserializedDF = serializedDF.select(
+          from_protobuf_wrapper(
+            $"value",
+            name,
+            descFilePathOpt,
+            Map("emit.default.values" -> "true")).as("value_from")
+        ).select($"value_from.key")
+
+        checkAnswer(
+          deserializedDF,
+          spark.range(3).toDF()
+        )
+    }
+  }
+
   test("round trip in from_protobuf and to_protobuf - Multiple Message") {
     val messageMultiDesc = ProtobufUtils.buildDescriptor(testFileDesc, "MultipleExample")
     val messageIncludeDesc = ProtobufUtils.buildDescriptor(testFileDesc, "IncludedExample")
