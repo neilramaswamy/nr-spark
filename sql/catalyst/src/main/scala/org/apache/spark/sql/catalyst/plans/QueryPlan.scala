@@ -115,6 +115,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
     if (references.isEmpty) {
       AttributeSet.empty
     } else {
+      println(s"[NEIL] ${self.output} References are ${references} and inputSet is ${inputSet}")
       references -- inputSet
     }
   }

@@ -20,11 +20,11 @@ package org.apache.spark.sql.catalyst.plans.logical
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference}
 import org.apache.spark.sql.catalyst.plans.logical.EventTimeWatermark.updateEventTimeColumn
 import org.apache.spark.sql.catalyst.trees.TreePattern.{EVENT_TIME_WATERMARK, TreePattern, UPDATE_EVENT_TIME_WATERMARK_COLUMN}
 import org.apache.spark.sql.catalyst.util.IntervalUtils
-import org.apache.spark.sql.types.MetadataBuilder
+import org.apache.spark.sql.types.{LongType, MetadataBuilder}
 import org.apache.spark.unsafe.types.CalendarInterval
 
 object EventTimeWatermark {
@@ -89,6 +89,30 @@ case class EventTimeWatermark(
 
   override protected def withNewChildInternal(newChild: LogicalPlan): EventTimeWatermark =
     copy(child = newChild)
+}
+
+case class StreamingLatencyMetadata(child: LogicalPlan) extends UnaryNode {
+
+  final override val nodePatterns: Seq[TreePattern] = Seq(EVENT_TIME_WATERMARK)
+
+  final val myLatencyAttributeReference = AttributeReference("_latency", LongType)()
+  override protected def withNewChildInternal(newChild: LogicalPlan): LogicalPlan = {
+    copy(child = newChild)
+  }
+  override def output: Seq[Attribute] = {
+    val output = child.output :+ myLatencyAttributeReference
+    if (myLatencyAttributeReference.exprId.id == 3L) {
+      throw new Exception("trying to see stack trace")
+    }
+    println(s"[NEIL] Getting output for metadata node ${output}")
+    output
+  }
+
+  override def metadataOutput: Seq[Attribute] = {
+    val mdOutput = child.output :+ myLatencyAttributeReference
+    println(s"[NEIL] Getting metadata output for metadata node ${output}")
+    mdOutput
+  }
 }
 
 /**

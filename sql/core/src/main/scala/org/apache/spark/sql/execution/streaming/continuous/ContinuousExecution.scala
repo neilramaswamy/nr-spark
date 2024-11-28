@@ -74,7 +74,7 @@ class ContinuousExecution(
     val v2ToRelationMap = MutableMap[StreamingRelationV2, StreamingDataSourceV2ScanRelation]()
     var nextSourceId = 0
     import org.apache.spark.sql.execution.datasources.v2.DataSourceV2Implicits._
-    val _logicalPlan = analyzedPlan.transform {
+    var _logicalPlan = analyzedPlan.transform {
       case s @ StreamingRelationV2(ds, sourceName, table: SupportsRead, options, output,
         catalog, identifier, _) =>
         val dsStr = if (ds.nonEmpty) s"[${ds.get}]" else ""

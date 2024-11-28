@@ -39,6 +39,7 @@ import org.apache.spark.sql.catalyst.optimizer.OptimizeUpdateFields
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
+import org.apache.spark.sql.catalyst.streaming.StreamingRelationV2
 import org.apache.spark.sql.catalyst.trees.AlwaysProcess
 import org.apache.spark.sql.catalyst.trees.CurrentOrigin.withOrigin
 import org.apache.spark.sql.catalyst.trees.TreePattern._
@@ -296,6 +297,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
       ResolveRelations ::
       ResolvePartitionSpec ::
       ResolveFieldNameAndPosition ::
+      AddSyntheticStreamingMetadataColumns ::
       AddMetadataColumns ::
       DeduplicateRelations ::
       new ResolveReferences(catalogManager) ::
@@ -909,6 +911,16 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
     }
   }
 
+  object AddSyntheticStreamingMetadataColumns extends Rule[LogicalPlan] {
+    def apply(plan: LogicalPlan): LogicalPlan = {
+      println(s"[NEIL] plan at AddSyntheticStreamingMetadataColumns: $plan")
+      plan.resolveOperatorsUpWithPruning(x => !x.containsPattern(EVENT_TIME_WATERMARK)) {
+        case r: StreamingRelationV2 =>
+          StreamingLatencyMetadata(r)
+      }
+    }
+  }
+
   /**
    * Adds metadata columns to output for child relations when nodes are missing resolved attributes.
    *
@@ -930,20 +942,27 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
       AlwaysProcess.fn, ruleId) {
       case hint: UnresolvedHint => hint
       // Add metadata output to all node types
-      case node if node.children.nonEmpty && node.resolved && hasMetadataCol(node) =>
-        val inputAttrs = AttributeSet(node.children.flatMap(_.output))
-        val metaCols = getMetadataAttributes(node).filterNot(inputAttrs.contains)
-        if (metaCols.isEmpty) {
-          node
-        } else {
-          val newNode = node.mapChildren(addMetadataCol(_, metaCols.map(_.exprId).toSet))
-          // We should not change the output schema of the plan. We should project away the extra
-          // metadata columns if necessary.
-          if (newNode.sameOutput(node)) {
-            newNode
+      case node if node.children.nonEmpty && node.resolved =>
+        println(s"[NEIL] In AddMetadataColumns: $node. hasMetadataCol: ${hasMetadataCol(node)}")
+        if (hasMetadataCol(node)) {
+          val inputAttrs = AttributeSet(node.children.flatMap(_.output))
+          val metaCols = getMetadataAttributes(node).filterNot(inputAttrs.contains)
+          println(s"[NEIL] metadata attributes: ${getMetadataAttributes(node)}, " +
+            s"metaCols for adding: $metaCols, inputAttrs: $inputAttrs")
+          if (metaCols.isEmpty) {
+            node
           } else {
-            Project(node.output, newNode)
+            val newNode = node.mapChildren(addMetadataCol(_, metaCols.map(_.exprId).toSet))
+            // We should not change the output schema of the plan. We should project away the extra
+            // metadata columns if necessary.
+            if (newNode.sameOutput(node)) {
+              newNode
+            } else {
+              Project(node.output, newNode)
+            }
           }
+        } else {
+          node
         }
     }
 

@@ -164,6 +164,26 @@ class StreamingAggregationSuite extends StateStoreMetricsTest with Assertions {
     }
   }
 
+  test("metadata column persists through streaming aggregation") {
+    val q = MemoryStream[Int]
+
+//    val df = q.toDF()
+//      .where($"value" % 10 === 0)
+//      .groupBy($"value")
+//      .agg(count("*"))
+//      .select($"value", $"count(1)" as "count", $"_latency")
+
+    val df = q.toDF().select($"value", $"_latency")
+    df.explain(true)
+
+    testStream(df, Update)(
+      // 43 should be dropped
+      AddData(q, 20, 20, 43, 30),
+      // CheckNewAnswer((20, 2, "_latencyMetadata"), (30, 1, "_latencyMetadata"))
+      CheckNewAnswer((20, 69420), (20, 69420), (43, 69420), (30, 69420))
+    )
+  }
+
   testWithAllStateVersions("sort after aggregate in complete mode") {
     val inputData = MemoryStream[Int]
 
