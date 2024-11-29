@@ -181,7 +181,7 @@ class StreamingAggregationSuite extends StateStoreMetricsTest with Assertions {
         // 43 should be dropped
         AddData(q, 20, 20, 43, 30),
         // CheckNewAnswer((20, 2, "_latencyMetadata"), (30, 1, "_latencyMetadata"))
-        CheckNewAnswer((20, 69420), (20, 69420), (43, 69420), (30, 69420))
+        CheckNewAnswer((20, 420), (20, 420), (43, 420), (30, 420))
       )
     }
   }

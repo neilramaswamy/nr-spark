@@ -25,10 +25,16 @@ import org.apache.spark.sql.types.{IntegerType, MetadataBuilder}
 object StreamingMetadata {
   val metadataOutput: Seq[AttributeReference] = Seq(
     AttributeReference("_latency", IntegerType, nullable = false,
-      new MetadataBuilder().putString(METADATA_COL_ATTR_KEY, "_latency").build())()
+      new MetadataBuilder()
+        .putString(METADATA_COL_ATTR_KEY, "_latency")
+        .putBoolean("_streaming_metadata", true)
+        .build()
+    )()
   )
 }
 
+// TODO(neil): Should output include, by default, the metadata columns? Or only when
+//  withMetadataColumns is called?
 case class StreamingMetadata(child: LogicalPlan, output: Seq[Attribute])
   extends UnaryNode with ExposesMetadataColumns {
 

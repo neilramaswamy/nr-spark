@@ -563,6 +563,14 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
     }
   }
 
+  object StreamingMetadataStrategy extends Strategy {
+    override def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
+      case StreamingMetadata(child, output) =>
+        StreamingMetadataExec(planLater(child), output) :: Nil
+      case _ => Nil
+    }
+  }
+
   /**
    * Used to plan the aggregate operator for expressions based on the AggregateFunction2 interface.
    */
