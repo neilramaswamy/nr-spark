@@ -39,6 +39,7 @@ import org.apache.spark.sql.catalyst.optimizer.OptimizeUpdateFields
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
+import org.apache.spark.sql.catalyst.streaming.StreamingRelationV2
 import org.apache.spark.sql.catalyst.trees.AlwaysProcess
 import org.apache.spark.sql.catalyst.trees.CurrentOrigin.withOrigin
 import org.apache.spark.sql.catalyst.trees.TreePattern._
@@ -296,6 +297,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
       ResolveRelations ::
       ResolvePartitionSpec ::
       ResolveFieldNameAndPosition ::
+      AddStreamingMetadata ::
       AddMetadataColumns ::
       DeduplicateRelations ::
       new ResolveReferences(catalogManager) ::
@@ -906,6 +908,33 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
 
         // expand the unpivot expressions
         Expand(exprs, output, child)
+    }
+  }
+
+  // Insert a StreamingMetadata logical operator above every StreamingExecutionRelation or
+  // StreamingDataSourceV2ScanRelation.
+  object AddStreamingMetadata extends Rule[LogicalPlan] {
+    // If we resolve downwards, then we end up in a situation where:
+    //
+    // ~ StreamingRelation
+    //
+    // turns into:
+    //
+    // ~ StreamingMetadata
+    //    ~ StreamingRelation
+    //
+    // And then the same thing happens to the child StreamingRelation, which will happen infinitely.
+    // To avoid this, we resolve upwards.
+    //
+    // Even with this in mind, I can't seem to get this to work, when I do _.containsPattern(
+    //  STREAMING_RELATION). It seems that after adding the StreamingMetadata, that node then
+    // is what resolveOperatorsUpWithPruning is invoked again with, which is not what I want.
+    //
+    // For now, I have a hack that says, "if we see a streaming metadata node, then don't continue
+    // up the tree."
+    def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsUpWithPruning(
+      node => !node.containsPattern(STREAMING_METADATA)) {
+      case n: StreamingRelationV2 => StreamingMetadata(n, n.output)
     }
   }
 

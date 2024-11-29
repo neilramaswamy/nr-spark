@@ -44,6 +44,7 @@ object RuleIdCollection {
   private var rulesNeedingIds: Seq[String] = {
       // Catalyst Analyzer rules
       "org.apache.spark.sql.catalyst.analysis.Analyzer$AddMetadataColumns" ::
+      "org.apache.spark.sql.catalyst.analysis.Analyzer$AddStreamingMetadata" ::
       "org.apache.spark.sql.catalyst.analysis.Analyzer$ExtractGenerator" ::
       "org.apache.spark.sql.catalyst.analysis.Analyzer$ExtractWindowExpressions" ::
       "org.apache.spark.sql.catalyst.analysis.Analyzer$GlobalAggregates" ::

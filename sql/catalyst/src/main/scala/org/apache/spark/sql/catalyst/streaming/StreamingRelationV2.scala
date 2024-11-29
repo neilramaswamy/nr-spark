@@ -20,6 +20,7 @@ package org.apache.spark.sql.catalyst.streaming
 import org.apache.spark.sql.catalyst.analysis.MultiInstanceRelation
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.plans.logical.{ExposesMetadataColumns, LeafNode, LogicalPlan, Statistics}
+import org.apache.spark.sql.catalyst.trees.TreePattern.{STREAMING_RELATION, TreePattern}
 import org.apache.spark.sql.connector.catalog.{CatalogPlugin, Identifier, SupportsMetadataColumns, Table, TableProvider}
 import org.apache.spark.sql.execution.datasources.v2.DataSourceV2Implicits
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
@@ -42,6 +43,9 @@ case class StreamingRelationV2(
     v1Relation: Option[LogicalPlan])
   extends LeafNode with MultiInstanceRelation with ExposesMetadataColumns {
   override lazy val resolved = v1Relation.forall(_.resolved)
+
+  final override val nodePatterns: Seq[TreePattern] = Seq(STREAMING_RELATION)
+
   override def isStreaming: Boolean = true
   override def toString: String = sourceName
 

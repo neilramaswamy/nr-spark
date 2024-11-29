@@ -112,6 +112,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
    * Attributes that are referenced by expressions but not provided by this node's children.
    */
   final def missingInput: AttributeSet = {
+    println(s"[NEIL] Calculating missingInput. references: ${references}, inputSet: ${inputSet}. ")
     if (references.isEmpty) {
       AttributeSet.empty
     } else {

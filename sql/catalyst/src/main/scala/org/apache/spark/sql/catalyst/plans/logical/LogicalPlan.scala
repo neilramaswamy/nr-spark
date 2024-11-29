@@ -387,6 +387,8 @@ object LogicalPlanIntegrity {
       // have different output semantics than typical queries.
       case _: Command => None
       case _: MultiInstanceRelation => None
+      // StreamingMetadata is a special node that can have dangling references.
+      case _: StreamingMetadata => None
       case n if canGetOutputAttrs(n) =>
         if (n.missingInput.nonEmpty) {
           Some(s"Aliases ${ n.missingInput.mkString(", ")} are dangling " +
