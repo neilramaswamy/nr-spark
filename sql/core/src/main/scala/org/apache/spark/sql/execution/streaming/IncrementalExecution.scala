@@ -77,6 +77,7 @@ class IncrementalExecution(
 
     override def extraPlanningStrategies: Seq[Strategy] =
       StreamingJoinStrategy ::
+      StreamingMetadataStrategy ::
       StatefulAggregationStrategy ::
       FlatMapGroupsWithStateStrategy ::
       FlatMapGroupsInPandasWithStateStrategy ::

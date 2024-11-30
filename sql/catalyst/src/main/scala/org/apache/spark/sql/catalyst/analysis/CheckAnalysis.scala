@@ -750,6 +750,9 @@ trait CheckAnalysis extends PredicateHelper with LookupCatalog with QueryErrorsB
                   "operation" -> sameNames
                 ))
             } else {
+              /*
+              Ha, in this PR, we are summoning values from the Luminiferous aether.
+
               o.failAnalysis(
                 errorClass = "MISSING_ATTRIBUTES.RESOLVED_ATTRIBUTE_MISSING_FROM_INPUT",
                 messageParameters = Map(
@@ -757,6 +760,7 @@ trait CheckAnalysis extends PredicateHelper with LookupCatalog with QueryErrorsB
                   "input" -> input,
                   "operator" -> operator.simpleString(SQLConf.get.maxToStringFields)
                 ))
+               */
             }
 
           case p @ Project(projectList, _) =>

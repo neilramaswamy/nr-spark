@@ -105,6 +105,7 @@ case class EventTimeWatermarkExec(
   override protected def doExecute(): RDD[InternalRow] = {
     child.execute().mapPartitions { iter =>
       val getEventTime = UnsafeProjection.create(eventTime :: Nil, child.output)
+
       iter.map { row =>
         eventTimeStats.add(microsToMillis(getEventTime(row).getLong(0)))
         row
