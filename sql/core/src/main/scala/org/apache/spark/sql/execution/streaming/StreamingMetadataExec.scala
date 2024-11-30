@@ -22,6 +22,9 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, GenericInternalRow, JoinedRow}
 import org.apache.spark.sql.execution.{SparkPlan, UnaryExecNode}
 
+// The output here is not derivable from the child's output (i.e. child.output), since it also
+// has a resolved metadata attribute. So, we make sure to explicitly pass this output as a
+// parameter.
 case class StreamingMetadataExec(child: SparkPlan, output: Seq[Attribute]) extends UnaryExecNode {
 
   lazy val metadataRow = {
