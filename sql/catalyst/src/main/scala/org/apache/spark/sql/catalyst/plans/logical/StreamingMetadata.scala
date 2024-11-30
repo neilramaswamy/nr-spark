@@ -22,17 +22,6 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.{STREAMING_METADATA, Tree
 import org.apache.spark.sql.catalyst.util.METADATA_COL_ATTR_KEY
 import org.apache.spark.sql.types.{IntegerType, MetadataBuilder}
 
-object StreamingMetadata {
-  val metadataOutput: Seq[AttributeReference] = Seq(
-    AttributeReference("_latency", IntegerType, nullable = false,
-      new MetadataBuilder()
-        .putString(METADATA_COL_ATTR_KEY, "_latency")
-        .putBoolean("_streaming_metadata", true)
-        .build()
-    )()
-  )
-}
-
 // TODO(neil): Should output include, by default, the metadata columns? Or only when
 //  withMetadataColumns is called?
 case class StreamingMetadata(child: LogicalPlan, output: Seq[Attribute])
@@ -43,11 +32,22 @@ case class StreamingMetadata(child: LogicalPlan, output: Seq[Attribute])
   override protected def withNewChildInternal(newChild: LogicalPlan): StreamingMetadata =
     copy(child = newChild)
 
-  override lazy val metadataOutput: Seq[AttributeReference] = StreamingMetadata.metadataOutput
+  override val metadataOutput: Seq[AttributeReference] = {
+    Seq(
+      AttributeReference(
+        "_latency",
+        IntegerType,
+        nullable = false,
+        new MetadataBuilder()
+          .putString(METADATA_COL_ATTR_KEY, "_latency")
+          .putBoolean("_streaming_metadata", true)
+          .build()
+      )()
+    )
+  }
 
   override def withMetadataColumns(): LogicalPlan = {
     val newMetadata = metadataOutput.filterNot(outputSet.contains)
-    println(s"[NEIL] newMetadata called for StreamingMetadata: ${newMetadata}")
     if (newMetadata.nonEmpty) {
       copy(output = output ++ newMetadata)
     } else {
